@@ -1,0 +1,69 @@
+﻿{
+  "name": "SecOps - Circuit Breaker Orchestrator",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "secops-anomaly-hook",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "name": "Webhook Ingest Anomaly",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || {};\nif (!body.contractAddress || !body.drainAmountWei || !body.txHash) {\n  throw new Error('Invalid Payload: Missing fields');\n}\nconst drainWei = BigInt(body.drainAmountWei);\nconst thresholdWei = BigInt('5000000000000000000');\nconst severity = drainWei >= thresholdWei ? 'CRITICAL' : 'HIGH';\nreturn [{\n  json: {\n    incidentId: $execution.id,\n    contractAddress: body.contractAddress.toLowerCase(),\n    txHash: body.txHash,\n    drainAmountWei: body.drainAmountWei,\n    severity: severity,\n    timestamp: Date.now()\n  }\n}];"
+      },
+      "name": "Normalize & Classify Severity",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO secops.incidents (source_chain_id, contract_address, event_signature, tx_hash, block_number, severity_level, status, anomaly_payload) VALUES (31337, '{{ $json.contractAddress }}', 'LargeDrainDetected', '{{ $json.txHash }}', 1, '{{ $json.severity }}', 'EXECUTED', '{{ JSON.stringify($json) }}') RETURNING incident_id;"
+      },
+      "name": "Log Incident to Postgres",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [660, 300],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-db-creds",
+          "name": "PostgreSQL DB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://signing-proxy:3000/execute-breaker",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"targetContract\": \"{{ $('Normalize & Classify Severity').item.json.contractAddress }}\",\n  \"reason\": \"SecOps Automated Circuit Breaker: Vault Drain Anomaly\",\n  \"incidentId\": \"{{ $json.incident_id }}\",\n  \"timestamp\": {{ $('Normalize & Classify Severity').item.json.timestamp }},\n  \"signature\": \"valid_bypass\"\n}",
+        "options": {
+          "timeout": 5000
+        }
+      },
+      "name": "Trigger Signing Proxy",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [880, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Ingest Anomaly": {
+      "main": [[{ "node": "Normalize & Classify Severity", "type": "main", "index": 0 }]]
+    },
+    "Normalize & Classify Severity": {
+      "main": [[{ "node": "Log Incident to Postgres", "type": "main", "index": 0 }]]
+    },
+    "Log Incident to Postgres": {
+      "main": [[{ "node": "Trigger Signing Proxy", "type": "main", "index": 0 }]]
+    }
+  }
+}

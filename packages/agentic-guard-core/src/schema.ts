@@ -1,0 +1,36 @@
+export const INTENT_SCHEMA = {
+  $schema: "http://json-schema.org/draft-07/schema#",
+  type: "object",
+  required: [
+    "agentId",
+    "policyId",
+    "chainId",
+    "targetContract",
+    "functionSignature",
+    "recipientAddress",
+    "amountWei",
+    "estimatedValueUsd",
+    "nonce",
+    "timestamp"
+  ],
+  additionalProperties: false,
+  properties: {
+    agentId: { type: "string", pattern: "^agent-[a-zA-Z0-9_-]{3,32}$" },
+    policyId: { type: "string", minLength: 3, maxLength: 64 },
+    chainId: { type: "integer", minimum: 1 },
+    targetContract: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+    functionSignature: { 
+      type: "string", 
+      enum: [
+        "transfer(address,uint256)",
+        "approve(address,uint256)",
+        "emergencyPause(string)"
+      ]
+    },
+    recipientAddress: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+    amountWei: { type: "string", pattern: "^[0-9]{1,78}$" },
+    estimatedValueUsd: { type: "number", minimum: 0.01, maximum: 1000000 },
+    nonce: { type: "string", pattern: "^[a-fA-F0-9]{16,64}$" },
+    timestamp: { type: "integer", minimum: 1700000000 }
+  }
+} as const;

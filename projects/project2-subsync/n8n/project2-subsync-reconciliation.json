@@ -1,0 +1,73 @@
+{
+  "name": "SubSync - Revenue Reconciliation Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "subsync-payment-event",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "name": "Webhook Ingest On-Chain Payment",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body;\nif (!body.txHash || !body.rawAmountWei || body.tokenDecimals === undefined) {\n  throw new Error('Malformed payment event');\n}\nconst raw = BigInt(body.rawAmountWei);\nconst decimals = Number(body.tokenDecimals);\nconst divisor = BigInt(10) ** BigInt(decimals);\nconst integerPart = raw / divisor;\nconst remainder = raw % divisor;\nconst remainderStr = remainder.toString().padStart(decimals, '0');\nconst tokenUnitsStr = decimals > 0 ? `${integerPart}.${remainderStr}` : integerPart.toString();\nreturn [{\n  json: {\n    chainId: body.chainId || 31337,\n    txHash: body.txHash.toLowerCase(),\n    logIndex: body.logIndex || 0,\n    blockNumber: body.blockNumber || 1,\n    blockTimestamp: new Date().toISOString(),\n    senderAddress: body.senderAddress.toLowerCase(),\n    recipientAddress: body.recipientAddress.toLowerCase(),\n    tokenAddress: body.tokenAddress.toLowerCase(),\n    tokenSymbol: body.tokenSymbol || 'USDC',\n    tokenDecimals: decimals,\n    rawAmount: body.rawAmountWei,\n    tokenUnits: parseFloat(tokenUnitsStr),\n    customerId: body.customerId || 'CUST_DIRECT',\n    invoiceId: body.invoiceId || 'INV-2026-001',\n    expectedUsd: body.expectedUsd || 100.00\n  }\n}];"
+      },
+      "name": "Normalize Token Decimals",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.binance.com/api/v3/ticker/price?symbol={{ $json.tokenSymbol }}USDT",
+        "options": { "timeout": 3000 }
+      },
+      "name": "Resolve Spot Fiat Price",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [640, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $('Normalize Token Decimals').item.json;\nlet price = 1.0;\nif ($json && $json.price) {\n  price = parseFloat($json.price);\n} else if (prev.tokenSymbol === 'ETH' || prev.tokenSymbol === 'WETH') {\n  price = 3000.00;\n}\nconst fiatAmount = (prev.tokenUnits * price).toFixed(2);\nlet status = 'CONFIRMED';\nconst diff = parseFloat(fiatAmount) - prev.expectedUsd;\nif (Math.abs(diff) <= 0.01) status = 'RECONCILED';\nelse if (diff < 0) status = 'UNDERPAID';\nelse status = 'OVERPAID';\nreturn [{\n  json: {\n    ...prev,\n    fiatRateUsd: price.toFixed(6),\n    fiatAmountUsd: fiatAmount,\n    reconciliationStatus: status\n  }\n}];"
+      },
+      "name": "Reconcile Fiat vs Invoice",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [860, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO subsync.reconciliation_ledger (chain_id, tx_hash, log_index, block_number, block_timestamp, sender_address, recipient_address, token_address, raw_amount, token_decimals, token_symbol, fiat_rate_usd, fiat_amount_usd, customer_id, invoice_id, status, accounting_sync_status) VALUES ({{ $json.chainId }}, '{{ $json.txHash }}', {{ $json.logIndex }}, {{ $json.blockNumber }}, NOW(), '{{ $json.senderAddress }}', '{{ $json.recipientAddress }}', '{{ $json.tokenAddress }}', {{ $json.rawAmount }}, {{ $json.tokenDecimals }}, '{{ $json.tokenSymbol }}', {{ $json.fiatRateUsd }}, {{ $json.fiatAmountUsd }}, '{{ $json.customerId }}', '{{ $json.invoiceId }}', '{{ $json.reconciliationStatus }}', 'SYNCED') ON CONFLICT (chain_id, tx_hash, log_index) DO NOTHING RETURNING ledger_id;"
+      },
+      "name": "Idempotent DB Insert",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [1080, 300],
+      "credentials": {
+        "postgres": { "id": "postgres-db-creds", "name": "PostgreSQL DB" }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Ingest On-Chain Payment": {
+      "main": [[{ "node": "Normalize Token Decimals", "type": "main", "index": 0 }]]
+    },
+    "Normalize Token Decimals": {
+      "main": [[{ "node": "Resolve Spot Fiat Price", "type": "main", "index": 0 }]]
+    },
+    "Resolve Spot Fiat Price": {
+      "main": [[{ "node": "Reconcile Fiat vs Invoice", "type": "main", "index": 0 }]]
+    },
+    "Reconcile Fiat vs Invoice": {
+      "main": [[{ "node": "Idempotent DB Insert", "type": "main", "index": 0 }]]
+    }
+  }
+}

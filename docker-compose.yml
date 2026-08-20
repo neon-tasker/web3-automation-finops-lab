@@ -1,0 +1,116 @@
+﻿networks:
+  neon_automation_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  postgres_data:
+    driver: local
+  n8n_data:
+    driver: local
+
+services:
+  postgres-db:
+    image: postgres:16-alpine
+    container_name: postgres-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_secure_pass_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-web3_automation}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/postgres/init-schemas.sql:/docker-entrypoint-initdb.d/init-schemas.sql:ro
+    networks:
+      - neon_automation_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d web3_automation"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  local-anvil-node:
+    image: ghcr.io/foundry-rs/foundry:latest
+    container_name: local-anvil-node
+    restart: unless-stopped
+    entrypoint: ["anvil", "--host", "0.0.0.0", "--port", "8545", "--chain-id", "31337", "--block-time", "1"]
+    ports:
+      - "127.0.0.1:8545:8545"
+    networks:
+      - neon_automation_net
+    healthcheck:
+      test: ["CMD-SHELL", "cast block-number --rpc-url http://127.0.0.1:8545 || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  signing-proxy:
+    build:
+      context: ./infrastructure/signing-proxy
+      dockerfile: Dockerfile
+    container_name: signing-proxy
+    restart: unless-stopped
+    environment:
+      - PORT=3000
+      - RPC_PRIMARY_URL=http://local-anvil-node:8545
+      - HMAC_SHARED_SECRET=secops_auth_token_deterministic_key_2026
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - neon_automation_net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  mock-webhook-sink:
+    build:
+      context: ./infrastructure/mock-sink
+      dockerfile: Dockerfile
+    container_name: mock-webhook-sink
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks:
+      - neon_automation_net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  n8n-orchestrator:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n-orchestrator
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5678:5678"
+    environment:
+      - N8N_HOST=127.0.0.1
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - NODE_FUNCTION_ALLOW_BUILTIN=*
+      - NODE_FUNCTION_ALLOW_EXTERNAL=*
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres-db
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=web3_automation
+      - DB_POSTGRESDB_USER=postgres
+      - DB_POSTGRESDB_PASSWORD=postgres_secure_pass_2026
+      - DB_POSTGRESDB_SCHEMA=public
+      - WEBHOOK_URL=http://127.0.0.1:5678/
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=72
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - neon_automation_net
+    depends_on:
+      postgres-db:
+        condition: service_healthy

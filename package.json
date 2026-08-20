@@ -1,0 +1,27 @@
+{
+  "name": "neon-tasker-labs",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Deterministic Web3 Automation, Security and FinOps Laboratory",
+  "workspaces": [
+    "infrastructure/signing-proxy",
+    "infrastructure/mock-sink",
+    "projects/project2-subsync/frontend",
+    "packages/agentic-guard-core"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "npx ts-node scripts/run-all-tests.ts",
+    "format": "prettier --write \"**/*.{ts,tsx,json,sol,md}\""
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.12",
+    "@types/pg": "^8.11.6",
+    "axios": "^1.7.4",
+    "bignumber.js": "^9.1.2",
+    "ethers": "^6.13.2",
+    "pg": "^8.12.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4"
+  }
+}
