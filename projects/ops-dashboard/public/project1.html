@@ -1,0 +1,57 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Project 1 | SecOps Circuit Breaker Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-6 font-sans">
+  <div class="max-w-5xl mx-auto space-y-6">
+    <header class="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex justify-between items-center">
+      <div>
+        <div class="flex items-center gap-3">
+          <span class="h-3 w-3 rounded-full bg-red-500 animate-pulse"></span>
+          <h1 class="text-xl font-bold text-white">Project 1: SecOps Circuit Breaker</h1>
+          <span class="bg-red-500/10 text-red-400 border border-red-500/20 text-xs px-2.5 py-1 rounded-full font-semibold">Security Defense</span>
+        </div>
+        <p class="text-slate-400 text-xs mt-1">Autonomous On-Chain Incident Remediation & Vault Protection</p>
+      </div>
+      <button onclick="triggerSecOps()" class="bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition shadow-lg shadow-red-500/20">
+        🚨 Simulate 7.5 ETH Drain
+      </button>
+    </header>
+
+    <section class="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-4">
+      <h2 class="text-sm font-bold text-white">On-Chain Incident Log</h2>
+      <table class="w-full text-left text-xs">
+        <thead class="text-slate-400 border-b border-slate-800 uppercase font-semibold">
+          <tr><th class="py-2">Contract</th><th class="py-2">Severity</th><th class="py-2">State</th><th class="py-2">Remediation Tx</th></tr>
+        </thead>
+        <tbody id="p1Table" class="divide-y divide-slate-800 font-mono text-slate-300">
+          <tr><td colspan="4" class="py-4 text-center text-slate-500">Loading incidents...</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+  <script>
+    async function loadData() {
+      const res = await fetch('/api/metrics');
+      const data = await res.json();
+      const tbody = document.getElementById('p1Table');
+      tbody.innerHTML = (data.secops || []).map(i => `
+        <tr>
+          <td class="py-3 text-white font-bold">${i.contract_address.substring(0,14)}...</td>
+          <td class="py-3 text-red-400 font-semibold">${i.severity_level}</td>
+          <td class="py-3"><span class="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded text-[11px]">${i.status}</span></td>
+          <td class="py-3 text-slate-400 text-[11px]">${(i.remediation_tx_hash||'').substring(0,16)}...</td>
+        </tr>
+      `).join('') || '<tr><td colspan="4" class="py-4 text-center text-slate-500">No incidents recorded.</td></tr>';
+    }
+    async function triggerSecOps() {
+      await fetch('/api/simulate/secops-anomaly', { method: 'POST' });
+      loadData();
+    }
+    setInterval(loadData, 4000); loadData();
+  </script>
+</body>
+</html>

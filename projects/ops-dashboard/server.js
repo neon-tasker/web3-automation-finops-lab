@@ -8,6 +8,9 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/user', (req, res) => res.sendFile(path.join(__dirname, 'public', 'user.html')));
+app.get('/project1', (req, res) => res.sendFile(path.join(__dirname, 'public', 'project1.html')));
+app.get('/project2', (req, res) => res.sendFile(path.join(__dirname, 'public', 'project2.html')));
+app.get('/project3', (req, res) => res.sendFile(path.join(__dirname, 'public', 'project3.html')));
 app.get('/portal', (req, res) => res.sendFile(path.join(__dirname, 'public', 'user.html')));
 app.get('/client', (req, res) => res.sendFile(path.join(__dirname, 'public', 'user.html')));
 
@@ -228,3 +231,4 @@ const PORT = 4000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Unified Ops Dashboard running on http://0.0.0.0:${PORT}`);
 });
+
