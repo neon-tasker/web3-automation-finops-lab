@@ -1,0 +1,60 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Agentic Guard | Autonomous AI Policy Firewall</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-6 font-sans">
+  <div class="max-w-5xl mx-auto space-y-6">
+    <header class="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex justify-between items-center">
+      <div>
+        <div class="flex items-center gap-3">
+          <span class="h-3 w-3 rounded-full bg-blue-400 animate-pulse"></span>
+          <h1 class="text-xl font-bold text-white">Agentic Guard</h1>
+          <span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs px-2.5 py-1 rounded-full font-semibold">AI Agent Security</span>
+        </div>
+        <p class="text-slate-400 text-xs mt-1">Autonomous Policy Firewall, Limit Enforcement & Fail-Closed Protection</p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="triggerGuard(false)" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition">
+          ✅ Valid Intent ($100)
+        </button>
+        <button onclick="triggerGuard(true)" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition">
+          🛑 Over-Cap ($5,000)
+        </button>
+      </div>
+    </header>
+
+    <section class="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-4">
+      <h2 class="text-sm font-bold text-white">Active Policy Firewall Rules</h2>
+      <div id="policyBox" class="p-4 bg-slate-950 rounded-xl border border-slate-800 font-mono text-xs text-slate-300 space-y-1">
+        <p><span class="text-slate-500">Target Policy:</span> DEF-AGENT-POLICY-V1</p>
+        <p><span class="text-slate-500">Max Single Tx Limit:</span> $500.00 USD</p>
+        <p><span class="text-slate-500">Hourly Velocity Limit:</span> $2,500.00 USD</p>
+        <p><span class="text-slate-500">Policy Mode:</span> FAIL-CLOSED</p>
+      </div>
+      <div id="lastDecision" class="hidden p-4 rounded-xl font-mono text-xs"></div>
+    </section>
+  </div>
+  <script>
+    async function triggerGuard(overCap) {
+      const res = await fetch('/api/simulate/agentic-guard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ overCap })
+      });
+      const data = await res.json();
+      const dBox = document.getElementById('lastDecision');
+      dBox.classList.remove('hidden');
+      if (data.result.decision === 'BLOCKED') {
+        dBox.className = 'p-4 rounded-xl font-mono text-xs bg-red-950/40 border border-red-800/40 text-red-300 space-y-1';
+        dBox.innerHTML = `<p class="font-bold text-red-400 font-sans">🛑 DECISION: BLOCKED (FAIL-CLOSED)</p><p>Attempted: $${data.result.estimatedValueUsd.toFixed(2)} USD</p><p>Reason: ${data.result.reason}</p>`;
+      } else {
+        dBox.className = 'p-4 rounded-xl font-mono text-xs bg-emerald-950/40 border border-emerald-800/40 text-emerald-300 space-y-1';
+        dBox.innerHTML = `<p class="font-bold text-emerald-400 font-sans">✅ DECISION: APPROVED</p><p>Amount: $${data.result.estimatedValueUsd.toFixed(2)} USD</p><p>Status: Policy limits respected</p>`;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SubSync FinOps | Real-Time Payment Settlement</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-6 font-sans">
+  <div class="max-w-5xl mx-auto space-y-6">
+    <header class="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex justify-between items-center">
+      <div>
+        <div class="flex items-center gap-3">
+          <span class="h-3 w-3 rounded-full bg-emerald-400 animate-pulse"></span>
+          <h1 class="text-xl font-bold text-white">SubSync FinOps</h1>
+          <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-2.5 py-1 rounded-full font-semibold">FinOps & Accounting</span>
+        </div>
+        <p class="text-slate-400 text-xs mt-1">Multi-Token Settlement, Double-Entry Persistence & Verifiable Receipts</p>
+      </div>
+      <button onclick="triggerSubSync()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition shadow-lg shadow-emerald-500/20">
+        💰 Ingest $500 USDC Settlement
+      </button>
+    </header>
+
+    <section class="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-4">
+      <h2 class="text-sm font-bold text-white">Reconciled Invoice Ledger</h2>
+      <table class="w-full text-left text-xs">
+        <thead class="text-slate-400 border-b border-slate-800 uppercase font-semibold">
+          <tr><th class="py-2">Invoice ID</th><th class="py-2">Token</th><th class="py-2">USD Amount</th><th class="py-2">Status</th><th class="py-2">Tx Hash</th></tr>
+        </thead>
+        <tbody id="subsyncTable" class="divide-y divide-slate-800 font-mono text-slate-300">
+          <tr><td colspan="5" class="py-4 text-center text-slate-500">Loading ledger...</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+  <script>
+    async function loadData() {
+      const res = await fetch('/api/metrics');
+      const data = await res.json();
+      const tbody = document.getElementById('subsyncTable');
+      tbody.innerHTML = (data.subsync || []).map(i => `
+        <tr>
+          <td class="py-3 text-white font-bold">${i.invoice_id}</td>
+          <td class="py-3">${i.token_symbol}</td>
+          <td class="py-3 text-emerald-400 font-bold">$${parseFloat(i.fiat_amount_usd).toFixed(2)}</td>
+          <td class="py-3"><span class="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded text-[11px]">${i.status}</span></td>
+          <td class="py-3 text-slate-400 text-[11px]">${(i.tx_hash||'').substring(0,16)}...</td>
+        </tr>
+      `).join('') || '<tr><td colspan="5" class="py-4 text-center text-slate-500">No transactions recorded.</td></tr>';
+    }
+    async function triggerSubSync() {
+      await fetch('/api/simulate/subsync-payment', { method: 'POST' });
+      loadData();
+    }
+    setInterval(loadData, 4000); loadData();
+  </script>
+</body>
+</html>
