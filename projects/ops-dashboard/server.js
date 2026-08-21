@@ -188,7 +188,7 @@ app.post('/api/simulate/secops-anomaly', async (req, res) => {
 
     const proxyRes = await axios.post('http://signing-proxy:3000/execute-remediation', payload, {
       headers: { 'x-hmac-signature': signature },
-      timeout: 3000
+      timeout: 8000
     });
 
     const txHash = proxyRes.data.txHash || '0x' + crypto.randomBytes(32).toString('hex');
@@ -324,3 +324,4 @@ const PORT = 4000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`[Core Gateway] Production Ops Hub running on port ${PORT}`);
 });
+
