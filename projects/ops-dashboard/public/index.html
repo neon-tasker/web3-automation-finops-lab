@@ -1,0 +1,260 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Web3 Ops & FinOps Master Command Center</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes pulse-slow { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .live-dot { animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-6 font-sans antialiased">
+  <div class="max-w-7xl mx-auto space-y-6">
+    
+    <!-- Top Header -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-900/80 border border-slate-800 p-6 rounded-2xl backdrop-blur-sm gap-4">
+      <div>
+        <div class="flex items-center gap-3">
+          <span class="h-3.5 w-3.5 rounded-full bg-emerald-400 live-dot"></span>
+          <h1 class="text-2xl font-bold tracking-tight text-white">Web3 Ops & FinOps Master Hub</h1>
+          <span class="bg-emerald-500/10 text-emerald-400 text-xs font-semibold px-2.5 py-1 rounded-full border border-emerald-500/20">24/7 LIVE</span>
+        </div>
+        <p class="text-slate-400 text-sm mt-1">Autonomous SecOps Circuit Breaker, SubSync FinOps & Agentic Guard Orchestration</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="testTelegram()" class="bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-xl text-sm transition flex items-center gap-2 shadow-lg shadow-blue-500/20">
+          <span>📲</span> Send Telegram Ping
+        </button>
+        <button onclick="refreshData()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium px-4 py-2 rounded-xl text-sm transition border border-slate-700">
+          🔄 Refresh
+        </button>
+      </div>
+    </header>
+
+    <!-- Service Liveness Matrix -->
+    <section class="grid grid-cols-2 md:grid-cols-5 gap-4" id="servicesGrid">
+      <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+        <p class="text-xs text-slate-400 uppercase font-semibold">Anvil EVM Node</p>
+        <p class="text-lg font-bold mt-1 text-emerald-400" id="status-anvil">Checking...</p>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+        <p class="text-xs text-slate-400 uppercase font-semibold">Signing Proxy</p>
+        <p class="text-lg font-bold mt-1 text-emerald-400" id="status-proxy">Checking...</p>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+        <p class="text-xs text-slate-400 uppercase font-semibold">PostgreSQL 16</p>
+        <p class="text-lg font-bold mt-1 text-emerald-400" id="status-pg">Checking...</p>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+        <p class="text-xs text-slate-400 uppercase font-semibold">n8n Orchestrator</p>
+        <p class="text-lg font-bold mt-1 text-emerald-400" id="status-n8n">Checking...</p>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+        <p class="text-xs text-slate-400 uppercase font-semibold">Webhook Sink</p>
+        <p class="text-lg font-bold mt-1 text-emerald-400" id="status-sink">Checking...</p>
+      </div>
+    </section>
+
+    <!-- One-Click Control & Simulation Matrix -->
+    <section class="bg-slate-900/60 border border-slate-800 p-6 rounded-2xl space-y-4">
+      <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+        <span>⚡</span> Direct Simulation Controls <span class="text-xs text-slate-400 font-normal">(No PowerShell Needed)</span>
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Project 1 Button -->
+        <div class="bg-slate-950 p-4 rounded-xl border border-red-950/60 flex flex-col justify-between">
+          <div>
+            <h3 class="font-bold text-red-400 text-sm">Project 1: SecOps</h3>
+            <p class="text-xs text-slate-400 mt-1">Simulate 7.5 ETH Vault Drain Anomaly</p>
+          </div>
+          <button onclick="triggerSecOps()" class="mt-4 bg-red-600/20 hover:bg-red-600/40 text-red-300 border border-red-600/40 font-medium py-2 px-3 rounded-lg text-xs transition">
+            🚨 Trip Circuit Breaker
+          </button>
+        </div>
+
+        <!-- Project 2 Button -->
+        <div class="bg-slate-950 p-4 rounded-xl border border-emerald-950/60 flex flex-col justify-between">
+          <div>
+            <h3 class="font-bold text-emerald-400 text-sm">Project 2: SubSync</h3>
+            <p class="text-xs text-slate-400 mt-1">Simulate $500 USDC On-Chain Invoice Payment</p>
+          </div>
+          <button onclick="triggerSubSync()" class="mt-4 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-600/40 font-medium py-2 px-3 rounded-lg text-xs transition">
+            💰 Ingest & Reconcile Payment
+          </button>
+        </div>
+
+        <!-- Project 3 Button -->
+        <div class="bg-slate-950 p-4 rounded-xl border border-indigo-950/60 flex flex-col justify-between">
+          <div>
+            <h3 class="font-bold text-indigo-400 text-sm">Project 3: Agentic Guard</h3>
+            <p class="text-xs text-slate-400 mt-1">Simulate AI Agent ($5,000 Over-Cap Limit Breach)</p>
+          </div>
+          <div class="flex gap-2 mt-4">
+            <button onclick="triggerGuard(false)" class="flex-1 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-600/40 font-medium py-2 px-2 rounded-lg text-xs transition">
+              ✅ Valid ($100)
+            </button>
+            <button onclick="triggerGuard(true)" class="flex-1 bg-amber-600/20 hover:bg-amber-600/40 text-amber-300 border border-amber-600/40 font-medium py-2 px-2 rounded-lg text-xs transition">
+              🛑 Over-Cap ($5k)
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="simLog" class="hidden text-xs bg-black p-3 rounded-lg font-mono text-emerald-400 border border-slate-800"></div>
+    </section>
+
+    <!-- Live Event Feeds -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      
+      <!-- SubSync Ledger -->
+      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+        <h2 class="text-base font-bold text-white mb-3 flex items-center justify-between">
+          <span>💰 SubSync Live Reconciliation Ledger</span>
+          <span class="text-xs text-slate-500 font-mono">Postgres Stream</span>
+        </h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="text-slate-400 border-b border-slate-800 uppercase font-semibold">
+              <tr>
+                <th class="py-2">Invoice</th>
+                <th class="py-2">Token</th>
+                <th class="py-2">USD Amount</th>
+                <th class="py-2">Status</th>
+              </tr>
+            </thead>
+            <tbody id="subsyncTable" class="divide-y divide-slate-800/60 font-mono text-slate-300">
+              <tr><td colspan="4" class="py-4 text-center text-slate-500">Loading ledger data...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SecOps Incidents -->
+      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+        <h2 class="text-base font-bold text-white mb-3 flex items-center justify-between">
+          <span>🚨 SecOps Circuit Breaker Incidents</span>
+          <span class="text-xs text-slate-500 font-mono">Postgres Stream</span>
+        </h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="text-slate-400 border-b border-slate-800 uppercase font-semibold">
+              <tr>
+                <th class="py-2">Contract</th>
+                <th class="py-2">Severity</th>
+                <th class="py-2">Status</th>
+                <th class="py-2">Remediation Tx</th>
+              </tr>
+            </thead>
+            <tbody id="secopsTable" class="divide-y divide-slate-800/60 font-mono text-slate-300">
+              <tr><td colspan="4" class="py-4 text-center text-slate-500">Loading incidents...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+
+  </div>
+
+  <script>
+    async function updateStatus() {
+      try {
+        const res = await fetch('/api/system-status');
+        const d = await res.json();
+        const s = d.services;
+        document.getElementById('status-anvil').innerText = s.anvilNode.status + ' (' + (s.anvilNode.latencyMs || 0) + 'ms)';
+        document.getElementById('status-proxy').innerText = s.signingProxy.status + ' (' + (s.signingProxy.latencyMs || 0) + 'ms)';
+        document.getElementById('status-pg').innerText = s.postgresDb.status + ' (' + (s.postgresDb.latencyMs || 0) + 'ms)';
+        document.getElementById('status-n8n').innerText = s.n8nOrchestrator.status + ' (' + (s.n8nOrchestrator.latencyMs || 0) + 'ms)';
+        document.getElementById('status-sink').innerText = s.webhookSink.status + ' (' + (s.webhookSink.latencyMs || 0) + 'ms)';
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function updateMetrics() {
+      try {
+        const res = await fetch('/api/metrics');
+        const d = await res.json();
+        
+        // SubSync
+        const sTable = document.getElementById('subsyncTable');
+        if (d.subsync && d.subsync.length > 0) {
+          sTable.innerHTML = d.subsync.map(r => `
+            <tr>
+              <td class="py-2.5 font-bold text-slate-200">${r.invoice_id}</td>
+              <td class="py-2.5">${r.token_symbol}</td>
+              <td class="py-2.5 text-emerald-400 font-semibold">$${r.fiat_amount_usd}</td>
+              <td class="py-2.5"><span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded text-[11px]">${r.status}</span></td>
+            </tr>
+          `).join('');
+        }
+
+        // SecOps
+        const secTable = document.getElementById('secopsTable');
+        if (d.secops && d.secops.length > 0) {
+          secTable.innerHTML = d.secops.map(r => `
+            <tr>
+              <td class="py-2.5 text-slate-300 font-semibold">${r.contract_address.substring(0, 10)}...</td>
+              <td class="py-2.5"><span class="text-red-400 bg-red-500/10 border border-red-500/20 px-1.5 py-0.5 rounded text-[11px]">${r.severity_level}</span></td>
+              <td class="py-2.5 text-slate-300">${r.status}</td>
+              <td class="py-2.5 text-slate-400 text-[10px]">${(r.remediation_tx_hash || 'PENDING').substring(0, 12)}...</td>
+            </tr>
+          `).join('');
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function logSim(msg) {
+      const el = document.getElementById('simLog');
+      el.classList.remove('hidden');
+      el.innerText = `[${new Date().toLocaleTimeString()}] ` + msg;
+    }
+
+    async function triggerSecOps() {
+      logSim('Simulating 7.5 ETH Vault Drain...');
+      const r = await fetch('/api/simulate/secops-anomaly', { method: 'POST' });
+      const d = await r.json();
+      logSim('SecOps Response: ' + JSON.stringify(d));
+      setTimeout(refreshData, 1000);
+    }
+
+    async function triggerSubSync() {
+      logSim('Simulating $500 USDC Payment...');
+      const r = await fetch('/api/simulate/subsync-payment', { method: 'POST' });
+      const d = await r.json();
+      logSim('SubSync Response: ' + JSON.stringify(d));
+      setTimeout(refreshData, 1000);
+    }
+
+    async function triggerGuard(overCap) {
+      logSim(`Simulating Agentic Guard (${overCap ? 'Over-Cap $5k' : 'Valid $100'})...`);
+      const r = await fetch('/api/simulate/agentic-guard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ overCap })
+      });
+      const d = await r.json();
+      logSim('Guard Response: ' + JSON.stringify(d));
+      setTimeout(refreshData, 1000);
+    }
+
+    async function testTelegram() {
+      logSim('Dispatching Telegram Ping...');
+      const r = await fetch('/api/telegram/test', { method: 'POST' });
+      const d = await r.json();
+      logSim('Telegram Result: ' + JSON.stringify(d));
+    }
+
+    function refreshData() {
+      updateStatus();
+      updateMetrics();
+    }
+
+    setInterval(refreshData, 4000);
+    refreshData();
+  </script>
+</body>
+</html>

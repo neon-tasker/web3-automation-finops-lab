@@ -1,17 +1,27 @@
-# Neon Tasker Labs — Deterministic Web3 Automation & Security Laboratory
+﻿# Web3 Automation & FinOps Autonomous Production Suite (2026)
 
-Founder: Anurag Sherke (No-Code / Low-Code Web3 Automation Architect)
+## 📌 Architecture Overview
+Enterprise-grade multi-chain Web3 operational suite featuring real-time on-chain security circuit breaking, multi-token payment reconciliation, and autonomous AI agent firewall policy enforcement.
 
-## Overview
-Neon Tasker Labs is a reproducible 54-file monorepo containing three specialized Web3 automation architectures:
+---
 
-1. **SubSync:** On-chain payment reconciliation pipeline with exact BigNumber token normalization, transactional outbox queues, and a real-time React dashboard.
-2. **Agentic Guard:** Deterministic policy firewall SDK and gateway for autonomous AI agents, enforcing AJV Draft-07 schemas and pessimistic PostgreSQL velocity locks.
-3. **SecOps Pipeline:** Incident response orchestrator featuring HMAC-authenticated webhook ingestion and pre-flight Anvil state simulations.
+### 🛠️ Microservices Ecosystem
+1. **Local EVM Node (Anvil):** Port `8545` (Chain ID `31337`, 1s block time)
+2. **SecOps Signing Proxy:** Port `3000` (HMAC-SHA256 authenticated relay)
+3. **SubSync Accounting Sink:** Port `8080` (ERP/Accounting ingest endpoint)
+4. **PostgreSQL 16 Enterprise DB:** Port `5432` (`web3_automation`)
+5. **n8n Workflow Engine:** Port `5678` (Event routing & state machine)
+6. **Master Ops Command Center:** Port `4000` (24/7 Monitoring, Telemetry & Simulation Controls)
 
-## Quickstart (Windows 10/11 + WSL2)
-```powershell
-.\scripts\setup-windows.ps1
-.\scripts\healthcheck.ps1
-.\scripts\verify-artifacts.ps1
-```
+---
+
+### 🚀 Live Projects Verified
+* **Project 1 (SecOps Circuit Breaker):** Anomaly detection, drain threshold mitigation & deterministic on-chain contract pause execution.
+* **Project 2 (SubSync FinOps):** Multi-chain token payment normalization, spot pricing, and double-entry idempotent PostgreSQL persistence.
+* **Project 3 (Agentic Guard Firewall):** Autonomous AI agent policy enforcement, single & velocity USD limit breach protection with fail-closed security.
+
+---
+
+### 🖥️ Master Dashboard Access
+* **URL:** `http://localhost:4000`
+* **Live Features:** 24/7 Container Health Matrix, SubSync Live Ledger stream, SecOps Incident Stream, One-Click Trigger Simulations.
