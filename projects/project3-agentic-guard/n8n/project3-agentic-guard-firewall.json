@@ -1,73 +1,107 @@
-[
-  {
-    "id": "U4F7paDJRp8qexbi",
-    "name": "Agentic Guard - Deterministic Policy Orchestrator",
-    "active": true,
-    "nodes": [
-      {
-        "parameters": {
-          "httpMethod": "POST",
-          "path": "agentic-guard-intent",
-          "responseMode": "lastNode",
-          "options": {}
-        },
-        "name": "Webhook Ingest Intent",
-        "type": "n8n-nodes-base.webhook",
-        "typeVersion": 1,
-        "position": [0, 0],
-        "id": "5e2df8dd-3ed1-4dfd-a4cb-c421cb23687f",
-        "webhookId": "a150db9a-7f09-4c7a-895d-57d2b318d6af"
-      },
-      {
-        "parameters": {
-          "jsCode": "const body = $json.body;\nif (!body.agentId || !body.policyId || !body.targetContract || body.estimatedValueUsd === undefined) {\n  throw new Error('MALFORMED_INTENT: Missing mandatory schema properties');\n}\nreturn [{\n  json: {\n    agentId: body.agentId,\n    policyId: body.policyId,\n    chainId: body.chainId || 31337,\n    targetContract: body.targetContract.toLowerCase(),\n    functionSignature: body.functionSignature || 'transfer(address,uint256)',\n    recipientAddress: (body.recipientAddress || '0x0000000000000000000000000000000000000000').toLowerCase(),\n    amountWei: body.amountWei || '0',\n    estimatedValueUsd: parseFloat(body.estimatedValueUsd),\n    nonce: body.nonce || Date.now().toString(16),\n    timestamp: body.timestamp || Math.floor(Date.now() / 1000)\n  }\n}];"
-        },
-        "name": "Validate & Normalize Intent",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [224, 0],
-        "id": "db304c15-0ef1-444f-849b-39d7728e85a8"
-      },
-      {
-        "parameters": {
-          "operation": "executeQuery",
-          "query": "SELECT p.policy_id, p.max_value_per_tx_usd, p.hourly_velocity_limit_usd, p.daily_spending_limit_usd, p.human_approval_threshold_usd, (SELECT json_agg(LOWER(a.target_contract)) FROM agentic_guard.allowlists a WHERE a.policy_id = p.policy_id) AS allowed_contracts FROM agentic_guard.policies p WHERE p.policy_id = '{{ $json.policyId }}' AND p.is_active = TRUE FOR UPDATE;",
-          "options": {}
-        },
-        "name": "Postgres Pessimistic Policy Lock",
-        "type": "n8n-nodes-base.postgres",
-        "typeVersion": 2.4,
-        "position": [448, 0],
-        "id": "590ca1e9-ca0f-4976-8d7d-080c311562f9",
-        "credentials": {
-          "postgres": {
-            "id": "DUYP8livMUZutbvw",
-            "name": "PostgreSQL DB"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "jsCode": "const intent = $('Validate & Normalize Intent').item.json;\nconst policy = $json;\nif (!policy || !policy.policy_id) {\n  return [{ json: { decision: 'BLOCKED', reason: 'POLICY_NOT_FOUND_OR_INACTIVE', intentId: intent.nonce } }];\n}\nconst allowedList = policy.allowed_contracts || [];\nif (allowedList.length > 0 && !allowedList.includes(intent.targetContract.toLowerCase())) {\n  return [{ json: { decision: 'BLOCKED', reason: 'UNAUTHORIZED_TARGET_CONTRACT', intentId: intent.nonce, targetContract: intent.targetContract } }];\n}\nif (intent.estimatedValueUsd > parseFloat(policy.max_value_per_tx_usd)) {\n  return [{ json: { decision: 'BLOCKED', reason: 'EXCEEDS_SINGLE_TX_CAP', intentId: intent.nonce } }];\n}\nlet decision = 'APPROVED';\nif (intent.estimatedValueUsd >= parseFloat(policy.human_approval_threshold_usd)) {\n  decision = 'AWAITING_2FA';\n}\nreturn [{\n  json: {\n    decision: decision,\n    agentId: intent.agentId,\n    policyId: intent.policyId,\n    targetContract: intent.targetContract,\n    estimatedValueUsd: intent.estimatedValueUsd,\n    evaluatedAt: new Date().toISOString()\n  }\n}];"
-        },
-        "name": "Deterministic Policy Decision",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [672, 0],
-        "id": "e0702ad0-e0b2-4c2b-ac59-397887e3abd8"
-      }
-    ],
-    "connections": {
-      "Webhook Ingest Intent": {
-        "main": [[{ "node": "Validate & Normalize Intent", "type": "main", "index": 0 }]]
-      },
-      "Validate & Normalize Intent": {
-        "main": [[{ "node": "Postgres Pessimistic Policy Lock", "type": "main", "index": 0 }]]
-      },
-      "Postgres Pessimistic Policy Lock": {
-        "main": [[{ "node": "Deterministic Policy Decision", "type": "main", "index": 0 }]]
-      }
-    },
-    "settings": { "executionOrder": "v1" }
-  }
-]
+{
+    "id":  "U4F7paDJRp8qexbi",
+    "name":  "Agentic Guard - Deterministic Policy Orchestrator",
+    "active":  true,
+    "nodes":  [
+                  {
+                      "parameters":  {
+                                         "path":  "agentic-guard-intent",
+                                         "responseMode":  "lastNode",
+                                         "options":  {
+
+                                                     },
+                                         "httpMethod":  "POST"
+                                     },
+                      "name":  "Webhook Ingest Intent",
+                      "type":  "n8n-nodes-base.webhook",
+                      "typeVersion":  1,
+                      "position":  [
+                                       0,
+                                       0
+                                   ],
+                      "id":  "5e2df8dd-3ed1-4dfd-a4cb-c421cb23687f",
+                      "webhookId":  "a150db9a-7f09-4c7a-895d-57d2b318d6af"
+                  },
+                  {
+                      "parameters":  {
+                                         "jsCode":  "const body = .body;\nif (!body.agentId || !body.policyId || !body.targetContract || body.estimatedValueUsd === undefined) {\n  throw new Error(\u0027MALFORMED_INTENT: Missing mandatory schema properties\u0027);\n}\nreturn [{\n  json: {\n    agentId: body.agentId,\n    policyId: body.policyId,\n    chainId: body.chainId || 31337,\n    targetContract: body.targetContract.toLowerCase(),\n    functionSignature: body.functionSignature || \u0027transfer(address,uint256)\u0027,\n    recipientAddress: (body.recipientAddress || \u00270x0000000000000000000000000000000000000000\u0027).toLowerCase(),\n    amountWei: body.amountWei || \u00270\u0027,\n    estimatedValueUsd: parseFloat(body.estimatedValueUsd),\n    nonce: body.nonce || Date.now().toString(16),\n    timestamp: body.timestamp || Math.floor(Date.now() / 1000)\n  }\n}];"
+                                     },
+                      "name":  "Validate \u0026 Normalize Intent",
+                      "type":  "n8n-nodes-base.code",
+                      "typeVersion":  2,
+                      "position":  [
+                                       224,
+                                       0
+                                   ],
+                      "id":  "db304c15-0ef1-444f-849b-39d7728e85a8"
+                  },
+                  {
+                      "parameters":  {
+                                         "query":  "SELECT COALESCE(p.policy_id, \u0027NONE\u0027) AS policy_id, COALESCE(p.max_value_per_tx_usd, 0) AS max_value_per_tx_usd, COALESCE(p.hourly_velocity_limit_usd, 0) AS hourly_velocity_limit_usd, COALESCE(p.daily_spending_limit_usd, 0) AS daily_spending_limit_usd, COALESCE(p.human_approval_threshold_usd, 0) AS human_approval_threshold_usd, COALESCE((SELECT json_agg(LOWER(a.target_contract)) FROM agentic_guard.allowlists a WHERE a.policy_id = p.policy_id), \u0027[]\u0027::json) AS allowed_contracts FROM (SELECT \u0027{{ .policyId }}\u0027 AS req_policy_id) req LEFT JOIN agentic_guard.policies p ON p.policy_id = req.req_policy_id AND p.is_active = TRUE;",
+                                         "operation":  "executeQuery",
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "name":  "Postgres Pessimistic Policy Lock",
+                      "type":  "n8n-nodes-base.postgres",
+                      "typeVersion":  2.4,
+                      "position":  [
+                                       448,
+                                       0
+                                   ],
+                      "id":  "590ca1e9-ca0f-4976-8d7d-080c311562f9",
+                      "credentials":  {
+                                          "postgres":  {
+                                                           "id":  "DUYP8livMUZutbvw",
+                                                           "name":  "PostgreSQL DB"
+                                                       }
+                                      }
+                  },
+                  {
+                      "parameters":  {
+                                         "jsCode":  "const intent = Validate \u0026 Normalize Intent.item.json;\nconst policy = ;\nif (!policy || policy.policy_id === \u0027NONE\u0027) {\n  return [{ json: { decision: \u0027BLOCKED\u0027, reason: \u0027POLICY_NOT_FOUND_OR_INACTIVE\u0027, intentId: intent.nonce } }];\n}\nconst allowedList = policy.allowed_contracts || [];\nif (allowedList.length \u003e 0 \u0026\u0026 !allowedList.includes(intent.targetContract.toLowerCase())) {\n  return [{ json: { decision: \u0027BLOCKED\u0027, reason: \u0027UNAUTHORIZED_TARGET_CONTRACT\u0027, intentId: intent.nonce, targetContract: intent.targetContract } }];\n}\nif (intent.estimatedValueUsd \u003e parseFloat(policy.max_value_per_tx_usd)) {\n  return [{ json: { decision: \u0027BLOCKED\u0027, reason: \u0027EXCEEDS_SINGLE_TX_CAP\u0027, intentId: intent.nonce } }];\n}\nlet decision = \u0027APPROVED\u0027;\nif (intent.estimatedValueUsd \u003e= parseFloat(policy.human_approval_threshold_usd)) {\n  decision = \u0027AWAITING_2FA\u0027;\n}\nreturn [{\n  json: {\n    decision: decision,\n    agentId: intent.agentId,\n    policyId: intent.policyId,\n    targetContract: intent.targetContract,\n    estimatedValueUsd: intent.estimatedValueUsd,\n    evaluatedAt: new Date().toISOString()\n  }\n}];"
+                                     },
+                      "name":  "Deterministic Policy Decision",
+                      "type":  "n8n-nodes-base.code",
+                      "typeVersion":  2,
+                      "position":  [
+                                       672,
+                                       0
+                                   ],
+                      "id":  "e0702ad0-e0b2-4c2b-ac59-397887e3abd8"
+                  }
+              ],
+    "connections":  {
+                        "Validate \u0026 Normalize Intent":  {
+                                                                 "main":  [
+                                                                              {
+                                                                                  "node":  "Postgres Pessimistic Policy Lock",
+                                                                                  "type":  "main",
+                                                                                  "index":  0
+                                                                              }
+                                                                          ]
+                                                             },
+                        "Postgres Pessimistic Policy Lock":  {
+                                                                 "main":  [
+                                                                              {
+                                                                                  "node":  "Deterministic Policy Decision",
+                                                                                  "type":  "main",
+                                                                                  "index":  0
+                                                                              }
+                                                                          ]
+                                                             },
+                        "Webhook Ingest Intent":  {
+                                                      "main":  [
+                                                                   {
+                                                                       "node":  "Validate \u0026 Normalize Intent",
+                                                                       "type":  "main",
+                                                                       "index":  0
+                                                                   }
+                                                               ]
+                                                  }
+                    },
+    "settings":  {
+                     "executionOrder":  "v1"
+                 }
+}
