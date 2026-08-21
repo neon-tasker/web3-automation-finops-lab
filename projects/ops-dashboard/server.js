@@ -7,6 +7,8 @@ const { Pool } = require('pg');
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+app.get('/user', (req, res) => res.sendFile(path.join(__dirname, 'public', 'user.html')));
+app.get('/portal', (req, res) => res.sendFile(path.join(__dirname, 'public', 'user.html')));
 app.get('/portal', (req, res) => res.sendFile(path.join(__dirname, 'public', 'client.html')));
 app.get('/client', (req, res) => res.sendFile(path.join(__dirname, 'public', 'client.html')));
 
@@ -181,4 +183,5 @@ const PORT = 4000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Unified Ops Dashboard running on http://0.0.0.0:${PORT}`);
 });
+
 
