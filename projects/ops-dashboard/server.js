@@ -7,6 +7,8 @@ const { Pool } = require('pg');
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+app.get('/portal', (req, res) => res.sendFile(path.join(__dirname, 'public', 'client.html')));
+app.get('/client', (req, res) => res.sendFile(path.join(__dirname, 'public', 'client.html')));
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8661301970:AAEyGarl4xtMFrM3qnhgaB2hAOjdI1T4TNs';
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '1861290667';
@@ -179,3 +181,4 @@ const PORT = 4000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Unified Ops Dashboard running on http://0.0.0.0:${PORT}`);
 });
+
