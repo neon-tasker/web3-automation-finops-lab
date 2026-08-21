@@ -1,11 +1,29 @@
+﻿# Dependencies
 node_modules/
-dist/
-build/
-.env
-.DS_Store
-*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Windows System Junk & Caches
+$Recycle.Bin/
+$SysReset/
+$AV_ASW/
+Thumbs.db
+desktop.ini
+*.tmp
+*.dat
+*.exe
+*.mkv
+
+# Environment & Secrets
+.env
+.env.local
+*.log
+
+# Docker & Storage Volumes
 postgres_data/
 n8n_data/
+.docker/
+
+# OS specific
+.DS_Store
